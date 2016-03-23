@@ -433,7 +433,7 @@ class pointShifter():
                     percentFromStart = ((lineLength2Point+lastSegPartialLen)*100)/lineGeom.length()
 
                     self.tra.ce('Percent from ref node: %s'%percentFromStart)
-                    if start_point_is_refnode:
+                    if not start_point_is_refnode:
                         #OUTPUT
                         percentFromStart = 100 - percentFromStart
 
