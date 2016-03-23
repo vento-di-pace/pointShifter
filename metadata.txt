@@ -1,0 +1,63 @@
+# This file contains metadata for your plugin. Beginning
+# with version 1.8 this is the preferred way to supply information about a
+# plugin. The current method of embedding metadata in __init__.py will
+# be supported until version 2.0
+
+# This file should be included when you package your plugin.
+
+# Mandatory items:
+
+
+[general]
+name=pointShifter
+qgisMinimumVersion=2.0
+description= Shifts points for specified distance from nearest line segment according side attribute from point layer
+version=1.0b
+author=Eugene Nazarenko
+email=eugene.v.nazarenko@gmail.com
+about=Tool is used for define attribute information about position of input point and to fix this position according input line side attribute. 
+      It finds nearest link from Streets layer.Then find coordinates of point that is the end of perpendicular line from point to found street 
+      link and lies on the link. After it one calculates percent of length from reference node to this point on link and find coordinates of point, 
+      which lies on perpendicular from correct side (defined in input attribute "side") on defined in input parameter distance from street link.
+# end of mandatory metadata
+
+# Optional items:
+
+# Uncomment the following line and add your changelog entries:
+changelog=Latest version of plugin is 1.0
+         pointShifter v 1.0
+         as known as Vhizk for now ))
+         *changed icon
+         +added ability to shift points to real current side with check box, which allow to switch these modes
+         +added additional field REF_IN_ID, which fills from linear layer if it exists there.
+         +added NEW_SIDE field, which is filled with real calculated with plugin side
+         *fixed side and shifting calculations
+         *fixed reference node detection algorithm
+
+         pointShifter v0.6b
+         improve search of neighbour link to point - get 5 links and calculate min distance link from them.
+         set default point moving distance to 0.000045 degree (5 meters)
+         fix destructor of QgsVectorFileWriter position and wrap it into try..finally block.
+         pointShifter v0.5b
+         work version with debug=ON
+         changes:
+         fixed adding of the new featire to output shapefile
+         point on line calculated within script instead of data from closestSegmentInContext
+         icon changed
+         fixed lineTextEdit config
+         
+
+
+# tags are comma separated with spaces allowed
+tags= point shift, move, point reference
+
+homepage=https://github.com/vento-di-pace/pointShifter
+tracker=https://github.com/vento-di-pace/pointShifter/issues
+repository=https://github.com/vento-di-pace/pointShifter
+icon=icon.png
+# experimental flag
+experimental=True
+
+# deprecated flag (applies to the whole plugin, not just a single version
+deprecated=False
+
