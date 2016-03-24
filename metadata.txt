@@ -24,7 +24,12 @@ about=Tool is used for define attribute information about position of input poin
 # Optional items:
 
 # Uncomment the following line and add your changelog entries:
-changelog=Latest version of plugin is 1.0
+changelog=Latest version of plugin is 1.1
+         pointShifter v1.1
+         +added threshold maximum distance for search between point and lines
+         *fixed reference node (southmost and westernmost node of the line) detection and PFRN calculation
+         *fixed cancellation of process data
+         
          pointShifter v 1.0
          as known as Vhizk for now ))
          *changed icon
