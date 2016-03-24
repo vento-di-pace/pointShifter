@@ -34,6 +34,8 @@ import os, os.path
 import uuid
 import math
 
+
+
 class trace:
     """
     class for tracing debug infos
@@ -42,9 +44,24 @@ class trace:
     def __init__(self):
         self.trace = False
 
+    def log(message = u'All is ok! :)', debug=False, severity = 0):
+        from sys import argv
+        from time import strftime
+        from codecs import open
+
+        mode='ab'
+        log_file = open(argv[0]+'.log', mode, 'utf-8')
+        if not debug:
+            print unicode(strftime(u'[%Y-%m-%d] %H:%M:%S>> '))+message
+        log_file.write((unicode(strftime(u'[%Y-%m-%d] %H:%M:%S>> '))+u'%s\r\n'%message))#.encode(curr_locale_cp))
+
+        log_file.close()
+
     def ce(self,string):
         if self.trace:
+            self.log(str(string))
             print string
+
 
 class pointShifter():
 
@@ -69,6 +86,7 @@ class pointShifter():
         self.tra = trace()
         self.outFilePath = ''
         self.encoding = ''
+        self.inprocess = False
 
     def initGui(self):
         # Create action that will start plugin configuration
@@ -86,6 +104,7 @@ class pointShifter():
 
         self.dlg.browsePushButton.clicked.connect(self.browseOutputFC)
         self.dlg.buttonBox.accepted.connect(self.applyShift)
+        self.dlg.buttonBox.rejected.connect(self.cancelProcess)
 
     def unload(self):
         # Remove the plugin menu item and icon
@@ -267,6 +286,8 @@ class pointShifter():
 # main algorithm
     def applyShift(self):
         self.dlg.show()
+        self.inprocess = True
+
         if self.dlg.pointLayerCombo.currentText()[:10] != 'Please add' and self.dlg.lineLayerCombo.currentText()[:10] != 'Please add':
             #prepare input layers
             pointLayer = self.pointLayerSet[self.dlg.pointLayerCombo.currentText()]
@@ -318,168 +339,173 @@ class pointShifter():
                 self.tra.ce('create Spatial Index object and fill it')
                 while lineFeatures.nextFeature(inFeat):
                     sindex.insertFeature(inFeat)
-                pntIndex = 0
+                pntIndex = -1
                 self.dlg.progressBar.reset()
 
                 self.tra.ce('start processing')
                 for pnt in pointFeatures:
+                    pntIndex=+1
+                    if not self.inprocess:break
                     #get point geometry object
                     pntGeom = pnt.geometry()
                     pnt_xy = pntGeom.asPoint() #QgsPoint type
                     #find nearest 5 links to it (5 cause this is not a fact that one link will be closest)
-                    lineID = sindex.nearestNeighbor(pnt_xy,5)
-                    self.tra.ce('nearest line id %s'%lineID)
+                    lineID_list = sindex.nearestNeighbor(pnt_xy,5)
+                    self.tra.ce('nearest line id %s'%lineID_list)
                     linesRequest = QgsFeatureRequest()
-                    linesRequest.setFilterFids(lineID)
+                    linesRequest.setFilterFids(lineID_list)
 
                     lineFeatIter = lineLayer.getFeatures(linesRequest)
 
                     lineFeat = QgsFeature()
                     # find closests link to point
-                    min_dist = 1.0
+                    min_dist = 181.0
+                    min_dist = float(self.dlg.lineEdit_2.text())
+                    lineID=None
                     while lineFeatIter.nextFeature(lineFeat):
                         self.tra.ce(lineFeat.id())
                         self.tra.ce(lineFeat.geometry().distance(pntGeom))
                         if lineFeat.geometry().distance(pntGeom) < min_dist:
                             min_dist = lineFeat.geometry().distance(pntGeom)
                             lineID = lineFeat.id()
-
-                    lineFeatIter = lineLayer.getFeatures(QgsFeatureRequest(lineID))
-                    lineFeatIter.nextFeature(lineFeat)
-
-
-                    lineGeom = lineFeat.geometry()
-                    pntOnLine = QgsPoint(0,0) # future point on line
-                    afterVertex = 0
-                    pntTrueSide = 0
-                    closeSegResult = lineGeom.closestSegmentWithContext(pnt_xy) #, pntOnLine, afterVertex, pntTrueSide values go to the closeSegResult
-                    self.tra.ce('Input point coordinates\n%s'%str(pnt_xy))
-                    self.tra.ce('closestSegment.. method result\n%s'%str(closeSegResult))
-
-                    #pntOnLine = closeSegResult[1]
-                    afterVertex = closeSegResult[2]
-                    #pntTrueSide = closeSegResult[3]
-
-                    #    def get_point_on_link (x1, y1, x2, y2, px, py):
-                    x,y = self.get_point_on_link(lineGeom.vertexAt(afterVertex-1).x(), lineGeom.vertexAt(afterVertex-1).y(), lineGeom.vertexAt(afterVertex).x(), lineGeom.vertexAt(afterVertex).y(), pnt_xy.x(), pnt_xy.y())
-                    pntOnLine = QgsPoint(x, y)
+                    if lineID:
+                        lineFeatIter = lineLayer.getFeatures(QgsFeatureRequest(lineID))
+                        lineFeatIter.nextFeature(lineFeat)
 
 
+                        lineGeom = lineFeat.geometry()
+                        pntOnLine = QgsPoint(0,0) # future point on line
+                        afterVertex = 0
+                        pntTrueSide = 0
+                        closeSegResult = lineGeom.closestSegmentWithContext(pnt_xy) #, pntOnLine, afterVertex, pntTrueSide values go to the closeSegResult
+                        self.tra.ce('Input point coordinates\n%s'%str(pnt_xy))
+                        self.tra.ce('closestSegment.. method result\n%s'%str(closeSegResult))
 
-                    vertexIndex = 0
-                    lineLength2Point = 0.0
-                    self.tra.ce('after vertex index %s'%afterVertex)
-                    while lineGeom.vertexAt(vertexIndex) <> QgsPoint(0,0):
-                        self.tra.ce('vertex index %s'%vertexIndex)
-                        vertexIndex+=1
-                        if vertexIndex < afterVertex:
-                            lineLength2Point += math.sqrt(math.pow((lineGeom.vertexAt(vertexIndex).y()-lineGeom.vertexAt(vertexIndex-1).y()), 2)+pow((lineGeom.vertexAt(vertexIndex).x()-lineGeom.vertexAt(vertexIndex-1).x()), 2))
-                    vertexIndex = vertexIndex-1
-                    self.tra.ce('Segment length is %s map units'%lineLength2Point)
+                        #pntOnLine = closeSegResult[1]
+                        afterVertex = closeSegResult[2]
+                        #pntTrueSide = closeSegResult[3]
 
-                    startLinePnt = lineGeom.vertexAt(0)
-                    endLinePoint = lineGeom.vertexAt(vertexIndex)
-                    self.tra.ce('Last vertex index %s'%vertexIndex)
-                    #remark: code for define ref point of link
-                    self.tra.ce('origin point %s, %s'%(pntOnLine.x(),pntOnLine.y()))
-
-                    start_point_is_refnode = self.start_is_ref(startLinePnt.x(), startLinePnt.y(), endLinePoint.x(), endLinePoint.y())
+                        #    def get_point_on_link (x1, y1, x2, y2, px, py):
+                        x,y = self.get_point_on_link(lineGeom.vertexAt(afterVertex-1).x(), lineGeom.vertexAt(afterVertex-1).y(), lineGeom.vertexAt(afterVertex).x(), lineGeom.vertexAt(afterVertex).y(), pnt_xy.x(), pnt_xy.y())
+                        pntOnLine = QgsPoint(x, y)
 
 
 
-                    self.tra.ce('Start point is ref node: %s'%start_point_is_refnode)
-                    stSide=''
-                    #define side from street
-                    if self.dlg.checkBox.isChecked():
-                        #from attribute value of point layer
-                        self.tra.ce('SIDE taken from attribute')
+                        vertexIndex = 0
+                        lineLength2Point = 0.0
+                        self.tra.ce('after vertex index %s'%afterVertex)
+                        while lineGeom.vertexAt(vertexIndex) <> QgsPoint(0,0):
+                            self.tra.ce('vertex index %s'%vertexIndex)
+                            vertexIndex+=1
+                            if vertexIndex < afterVertex:
+                                lineLength2Point += math.sqrt(math.pow((lineGeom.vertexAt(vertexIndex).y()-lineGeom.vertexAt(vertexIndex-1).y()), 2)+pow((lineGeom.vertexAt(vertexIndex).x()-lineGeom.vertexAt(vertexIndex-1).x()), 2))
+                        vertexIndex = vertexIndex-1
+                        self.tra.ce('Segment length is %s map units'%lineLength2Point)
 
-                        stSide = pnt.attribute('SIDE')
-                        self.tra.ce('SIDE should be %s'%stSide)
-                    else:
-                        self.tra.ce('SIDE taken from real point position')
-                        #or from reality
-                        street_side_code =  self.get_point_side_from_link(lineGeom.vertexAt(afterVertex-1).x(), lineGeom.vertexAt(afterVertex-1).y(), pnt_xy.x(), pnt_xy.y(), lineGeom.vertexAt(afterVertex).x(), lineGeom.vertexAt(afterVertex).y())
-                        if start_point_is_refnode:
-                            if street_side_code >= 0:
-                                stSide = 'L'
-                            elif street_side_code < 0:
-                                stSide = 'R'
+                        startLinePnt = lineGeom.vertexAt(0)
+                        endLinePoint = lineGeom.vertexAt(vertexIndex)
+                        self.tra.ce('Last vertex index %s'%vertexIndex)
+                        #remark: code for define ref point of link
+                        self.tra.ce('origin point %s, %s'%(pntOnLine.x(),pntOnLine.y()))
+
+                        start_point_is_refnode = self.start_is_ref(startLinePnt.x(), startLinePnt.y(), endLinePoint.x(), endLinePoint.y())
+
+
+
+                        self.tra.ce('Start point is ref node: %s'%start_point_is_refnode)
+                        stSide=''
+                        #define side from street
+                        if self.dlg.checkBox.isChecked():
+                            #from attribute value of point layer
+                            self.tra.ce('SIDE taken from attribute')
+
+                            stSide = pnt.attribute('SIDE')
+                            self.tra.ce('SIDE should be %s'%stSide)
                         else:
-                            if street_side_code >= 0:
-                                stSide = 'R'
-                            elif street_side_code < 0:
-                                stSide = 'L'
-                        self.tra.ce('SIDE should be %s'%stSide)
+                            self.tra.ce('SIDE taken from real point position')
+                            #or from reality
+                            street_side_code =  self.get_point_side_from_link(lineGeom.vertexAt(afterVertex-1).x(), lineGeom.vertexAt(afterVertex-1).y(), pnt_xy.x(), pnt_xy.y(), lineGeom.vertexAt(afterVertex).x(), lineGeom.vertexAt(afterVertex).y())
+                            if start_point_is_refnode:
+                                if street_side_code >= 0:
+                                    stSide = 'L'
+                                elif street_side_code < 0:
+                                    stSide = 'R'
+                            else:
+                                if street_side_code >= 0:
+                                    stSide = 'R'
+                                elif street_side_code < 0:
+                                    stSide = 'L'
+                            self.tra.ce('SIDE should be %s'%stSide)
 
 
-                    #calc shifted point
-                    self.tra.ce('point is shifting to %s map units'% float(self.dlg.lineEdit.text()))
-                    #x,y = self.get_moved_point(lineGeom.vertexAt(afterVertex-1).x(), lineGeom.vertexAt(afterVertex-1).y(), pntOnLine.x(), pntOnLine.y(), stSide, float(self.dlg.lineEdit.text()))
+                        #calc shifted point
+                        self.tra.ce('point is shifting to %s map units'% float(self.dlg.lineEdit.text()))
+                        #x,y = self.get_moved_point(lineGeom.vertexAt(afterVertex-1).x(), lineGeom.vertexAt(afterVertex-1).y(), pntOnLine.x(), pntOnLine.y(), stSide, float(self.dlg.lineEdit.text()))
 
-                    self.tra.ce(lineGeom.vertexAt(afterVertex-1).x())
-                    self.tra.ce(lineGeom.vertexAt(afterVertex-1).y())
-                    self.tra.ce(pntOnLine.x())
-                    self.tra.ce(pntOnLine.y())
+                        self.tra.ce(lineGeom.vertexAt(afterVertex-1).x())
+                        self.tra.ce(lineGeom.vertexAt(afterVertex-1).y())
+                        self.tra.ce(pntOnLine.x())
+                        self.tra.ce(pntOnLine.y())
 
-                    x,y = self.get_moved_point(lineGeom.vertexAt(afterVertex-1).x(), lineGeom.vertexAt(afterVertex-1).y(), pntOnLine.x(), pntOnLine.y(), stSide, start_point_is_refnode, float(self.dlg.lineEdit.text()))
+                        x,y = self.get_moved_point(lineGeom.vertexAt(afterVertex-1).x(), lineGeom.vertexAt(afterVertex-1).y(), pntOnLine.x(), pntOnLine.y(), stSide, start_point_is_refnode, float(self.dlg.lineEdit.text()))
 
-                    self.tra.ce('origin point %s, %s'%(x,y))
-                    #OUTPUT
-                    shiftedPoint = QgsPoint(x,y)
-
-                    #calc percent from refnode
-                    lastSegPartialLen = math.sqrt(math.pow((lineGeom.vertexAt(afterVertex-1).y()-pntOnLine.y()), 2)+pow((lineGeom.vertexAt(afterVertex-1).x()-pntOnLine.x()), 2))
-                    percentFromStart = ((lineLength2Point+lastSegPartialLen)*100)/lineGeom.length()
-
-                    self.tra.ce('Percent from ref node: %s'%percentFromStart)
-                    if not start_point_is_refnode:
+                        self.tra.ce('origin point %s, %s'%(x,y))
                         #OUTPUT
-                        percentFromStart = 100 - percentFromStart
+                        shiftedPoint = QgsPoint(x,y)
 
-                    #OUTPUT
-                    linkPVID = lineFeat.attribute('LINK_ID')
-                    self.tra.ce('LINK_ID: %s'%linkPVID)
+                        #calc percent from refnode
+                        lastSegPartialLen = math.sqrt(math.pow((lineGeom.vertexAt(afterVertex-1).y()-pntOnLine.y()), 2)+pow((lineGeom.vertexAt(afterVertex-1).x()-pntOnLine.x()), 2))
+                        percentFromStart = ((lineLength2Point+lastSegPartialLen)*100)/lineGeom.length()
 
-                    Ref_In_Id = -1
-                    try:
-                        Ref_In_Id = lineFeat.attribute('REF_IN_ID')
-                    except:
+                        self.tra.ce('Percent from ref node: %s'%percentFromStart)
+                        if not start_point_is_refnode:
+                            #OUTPUT
+                            percentFromStart = 100 - percentFromStart
+
+                        #OUTPUT
+                        linkPVID = lineFeat.attribute('LINK_ID')
+                        self.tra.ce('LINK_ID: %s'%linkPVID)
+
                         Ref_In_Id = -1
+                        try:
+                            Ref_In_Id = lineFeat.attribute('REF_IN_ID')
+                        except:
+                            Ref_In_Id = -1
 
-                    self.tra.ce('REF_IN_ID: %s'%Ref_In_Id)
+                        self.tra.ce('REF_IN_ID: %s'%Ref_In_Id)
 
 
 
 
 
-                    self.tra.ce(str(pointLayer.fields().allAttributesList()))
-                    #store procedure
-                    currentFeature = QgsFeature(outFields)
-                    currentFeature.initAttributes(outFields.count())
+                        self.tra.ce(str(pointLayer.fields().allAttributesList()))
+                        #store procedure
+                        currentFeature = QgsFeature(outFields)
+                        currentFeature.initAttributes(outFields.count())
 
-                    self.tra.ce(outFields.count())
-                    self.tra.ce(currentFeature.fields().count())
+                        self.tra.ce(outFields.count())
+                        self.tra.ce(currentFeature.fields().count())
 
-                    attributes = pnt.attributes()
+                        attributes = pnt.attributes()
 
-                    attributes += [shiftedPoint.y(), shiftedPoint.x(), linkPVID, Ref_In_Id, stSide, percentFromStart, int(percentFromStart)]
+                        attributes += [shiftedPoint.y(), shiftedPoint.x(), linkPVID, Ref_In_Id, stSide, percentFromStart, int(percentFromStart)]
 
-                    self.tra.ce(attributes)
+                        self.tra.ce(attributes)
 
-                    currentFeature.setGeometry(QgsGeometry.fromPoint(shiftedPoint))
-                    #currentFeature.setGeometry(QgsGeometry.fromPoint(pntOnLine))
-                    currentFeature.setAttributes(attributes)
+                        currentFeature.setGeometry(QgsGeometry.fromPoint(shiftedPoint))
+                        #currentFeature.setGeometry(QgsGeometry.fromPoint(pntOnLine))
+                        currentFeature.setAttributes(attributes)
 
-                    self.tra.ce(currentFeature.attributes())
+                        self.tra.ce(currentFeature.attributes())
 
-                    outputPointsShape.addFeature(currentFeature)
+                        outputPointsShape.addFeature(currentFeature)
 
-                    del currentFeature
+                        del currentFeature
 
                     #update progressBar
                     self.dlg.progressBar.setValue(pntIndex)
-                    pntIndex+=1
+                    self.dlg.update()
+
             finally:
                 del outputPointsShape
 
@@ -491,3 +517,5 @@ class pointShifter():
             self.dlg.hide()
 
 
+    def cancelProcess(self):
+        self.inprocess = False

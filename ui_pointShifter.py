@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'c:\SandBox\POI_Shifting_tool\pointShifter\ui_pointShifter.ui'
+# Form implementation generated from reading ui file 'c:\GitHub_PointShifter_repo\ui_pointShifter.ui'
 #
-# Created: Tue Mar 22 16:30:52 2016
+# Created: Thu Mar 24 14:01:54 2016
 #      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -58,23 +58,23 @@ class Ui_pointShifter(object):
         self.progressBar.setAlignment(QtCore.Qt.AlignJustify|QtCore.Qt.AlignVCenter)
         self.progressBar.setTextVisible(True)
         self.progressBar.setObjectName(_fromUtf8("progressBar"))
-        self.formLayout.setWidget(12, QtGui.QFormLayout.SpanningRole, self.progressBar)
+        self.formLayout.setWidget(14, QtGui.QFormLayout.SpanningRole, self.progressBar)
         self.buttonBox = QtGui.QDialogButtonBox(pointShifter)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
         self.buttonBox.setCenterButtons(False)
         self.buttonBox.setObjectName(_fromUtf8("buttonBox"))
-        self.formLayout.setWidget(13, QtGui.QFormLayout.SpanningRole, self.buttonBox)
+        self.formLayout.setWidget(15, QtGui.QFormLayout.SpanningRole, self.buttonBox)
         self.label_3 = QtGui.QLabel(pointShifter)
         self.label_3.setObjectName(_fromUtf8("label_3"))
-        self.formLayout.setWidget(7, QtGui.QFormLayout.SpanningRole, self.label_3)
+        self.formLayout.setWidget(9, QtGui.QFormLayout.SpanningRole, self.label_3)
         self.outputLineEdit = QtGui.QLineEdit(pointShifter)
         self.outputLineEdit.setMinimumSize(QtCore.QSize(200, 0))
         self.outputLineEdit.setInputMask(_fromUtf8(""))
         self.outputLineEdit.setText(_fromUtf8(""))
         self.outputLineEdit.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.outputLineEdit.setObjectName(_fromUtf8("outputLineEdit"))
-        self.formLayout.setWidget(9, QtGui.QFormLayout.LabelRole, self.outputLineEdit)
+        self.formLayout.setWidget(11, QtGui.QFormLayout.LabelRole, self.outputLineEdit)
         self.lineEdit = QtGui.QLineEdit(pointShifter)
         self.lineEdit.setInputMask(_fromUtf8(""))
         self.lineEdit.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
@@ -86,10 +86,18 @@ class Ui_pointShifter(object):
         self.browsePushButton = QtGui.QPushButton(pointShifter)
         self.browsePushButton.setMinimumSize(QtCore.QSize(70, 20))
         self.browsePushButton.setObjectName(_fromUtf8("browsePushButton"))
-        self.formLayout.setWidget(9, QtGui.QFormLayout.FieldRole, self.browsePushButton)
+        self.formLayout.setWidget(11, QtGui.QFormLayout.FieldRole, self.browsePushButton)
         self.checkBox = QtGui.QCheckBox(pointShifter)
         self.checkBox.setObjectName(_fromUtf8("checkBox"))
-        self.formLayout.setWidget(6, QtGui.QFormLayout.LabelRole, self.checkBox)
+        self.formLayout.setWidget(8, QtGui.QFormLayout.LabelRole, self.checkBox)
+        self.label_5 = QtGui.QLabel(pointShifter)
+        self.label_5.setObjectName(_fromUtf8("label_5"))
+        self.formLayout.setWidget(6, QtGui.QFormLayout.LabelRole, self.label_5)
+        self.lineEdit_2 = QtGui.QLineEdit(pointShifter)
+        self.lineEdit_2.setMaximumSize(QtCore.QSize(16777214, 16777215))
+        self.lineEdit_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.lineEdit_2.setObjectName(_fromUtf8("lineEdit_2"))
+        self.formLayout.setWidget(7, QtGui.QFormLayout.SpanningRole, self.lineEdit_2)
         self.verticalLayout.addLayout(self.formLayout)
 
         self.retranslateUi(pointShifter)
@@ -106,5 +114,7 @@ class Ui_pointShifter(object):
         self.label_4.setText(_translate("pointShifter", "Distance from between point and line (Map Units)", None))
         self.browsePushButton.setText(_translate("pointShifter", "Browse...", None))
         self.checkBox.setText(_translate("pointShifter", "Use point side from attribute \"SIDE\" instead of reality", None))
+        self.label_5.setText(_translate("pointShifter", "Maximum search distance between point and line", None))
+        self.lineEdit_2.setText(_translate("pointShifter", "0.00045", None))
 
 import resources_rc
