@@ -42,7 +42,7 @@ class trace:
     """
 
     def __init__(self):
-        self.trace = True
+        self.trace = False
 
     def log(message = u'All is ok! :)', debug=False, severity = 0):
         from sys import argv
