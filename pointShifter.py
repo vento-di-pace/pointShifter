@@ -42,7 +42,7 @@ class trace:
     """
 
     def __init__(self):
-        self.trace = False
+        self.trace = True
 
     def log(message = u'All is ok! :)', debug=False, severity = 0):
         from sys import argv
@@ -389,23 +389,30 @@ class pointShifter():
                         #get point geometry object
                         pntGeom = pnt.geometry()
                         pnt_xy = pntGeom.asPoint() #QgsPoint type
-                        #find nearest 5 links to it (5 cause this is not a fact that one link will be closest)
-                        lineID_list = sindex.nearestNeighbor(pnt_xy,5)
+                        #find nearest link to it
+                        lineID_list = sindex.nearestNeighbor(pnt_xy,1)
                         self.tra.ce('nearest line id %s'%lineID_list)
                         linesRequest = QgsFeatureRequest()
                         linesRequest.setFilterFids(lineID_list)
 
-                        lineFeatIter = lineLayer.getFeatures(linesRequest)
+                        closestlineFeature = lineLayer.getFeatures(linesRequest).next()
 
                         lineFeat = QgsFeature()
-                        # find closests link to point
-                        min_dist = 181.0
-                        min_dist = float(self.dlg.lineEdit_2.text())
+                        # find minimum distance to found link
+                        min_dist = pntGeom.distance(closestlineFeature.geometry())
+                        #min_dist = float(self.dlg.lineEdit_2.text())
                         lineID=None
-                        while lineFeatIter.nextFeature(lineFeat):
+                        #get links near point in min_distance bounding box
+                        px = pnt_xy.x()
+                        py = pnt_xy.y()
+                        closestFeatureIds = sindex.intersects(QgsRectangle(px-min_dist, py-min_dist, px+min_dist, py+min_dist))
+                        #search closest feature in min_dist bounding box
+                        for closeFeatId in closestFeatureIds:
+                            lineFeat = lineLayer.getFeatures(QgsFeatureRequest(closeFeatId)).next()
+
                             self.tra.ce(lineFeat.id())
                             self.tra.ce(lineFeat.geometry().distance(pntGeom))
-                            if lineFeat.geometry().distance(pntGeom) < min_dist:
+                            if lineFeat.geometry().distance(pntGeom) <= min_dist:
                                 min_dist = lineFeat.geometry().distance(pntGeom)
                                 lineID = lineFeat.id()
                         if lineID:
