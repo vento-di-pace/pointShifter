@@ -12,7 +12,7 @@
 name=pointShifter
 qgisMinimumVersion=2.9
 description= Shifts points for specified distance from nearest line segment according side attribute from point layer
-version=1.2
+version=1.3
 author=Eugene Nazarenko
 email=eugene.v.nazarenko@gmail.com
 about=Tool is used for define attribute information about position of input point and to fix this position according input line side attribute. 
@@ -24,7 +24,13 @@ about=Tool is used for define attribute information about position of input poin
 # Optional items:
 
 # Uncomment the following line and add your changelog entries:
-changelog=Latest version of plugin is 1.2
+changelog=Latest version of plugin is 1.3
+         pointShifter v1.3
+         *fixed evaluation of situations then point falls on start(end) of line segment or falls outside line segment
+         *improve search nearest line algorithm
+         *add log file which names as a result shape file just with *.log extention
+
+
          pointShifter v1.2
          *fixed evaluation of situations then point falls on start(end) of line segment or falls outside line segment
          *pfrn sets to1 if it less that 1 and to 99 if it more that 99

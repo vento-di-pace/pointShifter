@@ -36,6 +36,7 @@ import math
 
 
 
+
 class trace:
     """
     class for tracing debug infos
@@ -43,16 +44,17 @@ class trace:
 
     def __init__(self):
         self.trace = True
+        self.log_file_name = r'C:\pointShifter.log'
 
-    def log(message = u'All is ok! :)', debug=False, severity = 0):
+    def log(self, message = u'All is ok! :)', debug=False, severity = 0):
         from sys import argv
         from time import strftime
         from codecs import open
-
+        #log_file = argv[0]+'.log'
         mode='ab'
-        log_file = open(argv[0]+'.log', mode, 'utf-8')
-        if not debug:
-            print unicode(strftime(u'[%Y-%m-%d] %H:%M:%S>> '))+message
+        log_file = open(self.log_file_name, mode, 'utf-8')
+        #if not debug:
+            #print unicode(strftime(u'[%Y-%m-%d] %H:%M:%S>> '))+message
         log_file.write((unicode(strftime(u'[%Y-%m-%d] %H:%M:%S>> '))+u'%s\r\n'%message))#.encode(curr_locale_cp))
 
         log_file.close()
@@ -60,7 +62,7 @@ class trace:
     def ce(self,string):
         if self.trace:
             self.log(str(string))
-            print string
+            #print string
 
 
 class pointShifter():
@@ -306,19 +308,21 @@ class pointShifter():
 
         if AB_length > BC_length and AB_length > AC_length:
             self.state += ' onlink'
+            self.tra.ce('result (onlink) of '+str(result))
             return x1 + result.x, y1 + result.y
         else:
             # todo - find point before end.
             if AC_length > BC_length and AC_length > AB_length:
                 result = VSub(B, C_rev)
                 self.state += ' outsidelink from B'
-                self.tra.ce(str(result))
+                self.tra.ce('result (outsidelink from B) of '+str(result))
                 return result.x, result.y
-            elif AC_length < BC_length and AC_length < AB_length:
+            elif AC_length < BC_length and AB_length < BC_length:
                 result = VSub(A, C_rev)
                 self.state += ' outsidelink from A'
-                self.tra.ce(str(result))
+                self.tra.ce('result (outsidelink from A) of '+str(result))
                 return result.x, result.y
+
 
 # main algorithm
     def applyShift(self):
@@ -362,6 +366,7 @@ class pointShifter():
             outFields.append(QgsField(u'status', QVariant.String))
 
             outputPointsShape = QgsVectorFileWriter(self.outFilePath, self.encoding, outFields, QGis.WKBPoint, sRs)
+            self.tra.log_file_name = self.outFilePath+".log"
 
             #self.tra.ce(str(type(outputPointsShape)))
 
@@ -447,6 +452,7 @@ class pointShifter():
 
                             #    def get_point_on_link (x1, y1, x2, y2, px, py):
                             x,y = self.get_point_on_link(lineGeom.vertexAt(afterVertex-1).x(), lineGeom.vertexAt(afterVertex-1).y(), lineGeom.vertexAt(afterVertex).x(), lineGeom.vertexAt(afterVertex).y(), pnt_xy.x(), pnt_xy.y())
+                            self.tra.ce('<---------------CHECK POINT------------------->')
                             pntOnLine = QgsPoint(x, y)
 
 
@@ -538,30 +544,32 @@ class pointShifter():
                         self.tra.ce(e.message)
                         self.state += e.message
 
+                    try:
+                        self.tra.ce(str(pointLayer.fields().allAttributesList()))
+                        #store procedure
+                        currentFeature = QgsFeature(outFields)
+                        currentFeature.initAttributes(outFields.count())
 
-                    self.tra.ce(str(pointLayer.fields().allAttributesList()))
-                    #store procedure
-                    currentFeature = QgsFeature(outFields)
-                    currentFeature.initAttributes(outFields.count())
+                        self.tra.ce(outFields.count())
+                        self.tra.ce(currentFeature.fields().count())
 
-                    self.tra.ce(outFields.count())
-                    self.tra.ce(currentFeature.fields().count())
+                        attributes = pnt.attributes()
 
-                    attributes = pnt.attributes()
+                        attributes += [shiftedPoint.y(), shiftedPoint.x(), linkPVID, Ref_In_Id, stSide, percentFromStart, int(percentFromStart), self.state]
 
-                    attributes += [shiftedPoint.y(), shiftedPoint.x(), linkPVID, Ref_In_Id, stSide, percentFromStart, int(percentFromStart), self.state]
+                        self.tra.ce(attributes)
 
-                    self.tra.ce(attributes)
+                        currentFeature.setGeometry(QgsGeometry.fromPoint(shiftedPoint))
+                        #currentFeature.setGeometry(QgsGeometry.fromPoint(pntOnLine))
+                        currentFeature.setAttributes(attributes)
 
-                    currentFeature.setGeometry(QgsGeometry.fromPoint(shiftedPoint))
-                    #currentFeature.setGeometry(QgsGeometry.fromPoint(pntOnLine))
-                    currentFeature.setAttributes(attributes)
+                        self.tra.ce(currentFeature.attributes())
 
-                    self.tra.ce(currentFeature.attributes())
+                        outputPointsShape.addFeature(currentFeature)
 
-                    outputPointsShape.addFeature(currentFeature)
-
-                    del currentFeature
+                        del currentFeature
+                    except Exception as e:
+                        self.tra.ce(e.message)
 
                 #update progressBar
                 self.dlg.progressBar.setValue(pntIndex)
