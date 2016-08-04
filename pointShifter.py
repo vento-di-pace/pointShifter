@@ -404,8 +404,9 @@ class pointShifter():
 
                         lineFeat = QgsFeature()
                         # find minimum distance to found link
-                        min_dist = pntGeom.distance(closestlineFeature.geometry())
-                        #min_dist = float(self.dlg.lineEdit_2.text())
+                        min_dist = float(self.dlg.lineEdit_2.text())
+                        if not min_dist: #if min_dist, filled from UI, is zero, this means search for every nearest line.
+                            min_dist = pntGeom.distance(closestlineFeature.geometry())
                         lineID=None
                         #get links near point in min_distance bounding box
                         px = pnt_xy.x()
@@ -531,12 +532,8 @@ class pointShifter():
                                 percentFromStart = 1
                             if percentFromStart > 99:
                                 percentFromStart = 99
-
-
-
-
-
-
+                        else:# if LineID is null, it means that there's no link neaerest than minimum distanse, setted up in UI, then go to process nex point.
+                            continue
 
 
 
